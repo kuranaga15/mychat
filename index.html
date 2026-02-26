@@ -106,12 +106,13 @@ body.dark .input-area {
   border-color: #444;
 }
 
-input {
+input, textarea {
   flex: 1;
   padding: 10px;
   border-radius: 20px;
   border: 1px solid #ccc;
   font-size: 16px;
+  resize: none;
 }
 
 .edit-input {
@@ -147,7 +148,7 @@ button {
 <div class="chat" id="chat"></div>
 
 <div class="input-area">
-  <input type="text" id="textInput" placeholder="メッセージを入力">
+  <textarea id="textInput" placeholder="メッセージを入力" rows="2"></textarea>
   <button id="sendBtn" onclick="sendMessage()">送信</button>
   <button id="toggleBtn" onclick="toggleSender()">自分</button>
 </div>
@@ -280,12 +281,6 @@ function sendMessage() {
   renderMessages();
 }
 
-input.addEventListener("keydown", function(e) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
 
 function toggleSender() {
   currentSender = currentSender === "me" ? "other" : "me";
