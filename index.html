@@ -177,7 +177,13 @@ function formatText(text) {
   if (!text) return "";
 
   return text
-    .replace(/\*{1,2}(.*?)\*{1,2}/g, '<span class="gray">$1</span>')
+    // ![〜] を削除
+    .replace(/!\[.*?\]\s*/g, "")
+    // (https://〜) を削除
+    .replace(/\(https?:\/\/.*?\)\s*/g, "")
+    // * や ** 囲みをグレー化
+    .replace(/(\*{1,2})(.*?)\1/g, '<span class="gray">$2</span>')
+    // 改行
     .replace(/\n/g, "<br>");
 }
 
