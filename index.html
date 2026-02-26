@@ -6,6 +6,8 @@
 <title>My Chat</title>
 
 <style>
+html { height: 100%; }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   margin: 0;
@@ -15,6 +17,14 @@ body {
   background: #f2f2f2;
   color: black;
   transition: 0.3s;
+}
+
+.gray {
+  color: #888;
+}
+
+body.dark .gray {
+  color: #aaa;
 }
 
 body.dark {
@@ -65,7 +75,7 @@ body.dark .me .bubble { background: #2f6ea3; }
 body.dark .other .bubble { background: #333; }
 
 .text-content {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .action-row {
@@ -101,13 +111,17 @@ input {
   padding: 10px;
   border-radius: 20px;
   border: 1px solid #ccc;
+  font-size: 16px;
 }
 
 .edit-input {
-  padding: 6px;
-  border-radius: 8px;
-  border: 1px solid #aaa;
   width: 100%;
+  min-height: 100px;
+  resize: none;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #aaa;
+  padding: 8px;
 }
 
 button {
@@ -158,6 +172,14 @@ function save() {
   localStorage.setItem("chatStore", JSON.stringify(store));
 }
 
+function formatText(text) {
+  if (!text) return "";
+
+  return text
+    .replace(/\*{1,2}(.*?)\*{1,2}/g, '<span class="gray">$1</span>')
+    .replace(/\n/g, "<br>");
+}
+
 function renderConversations() {
   select.innerHTML = "";
   Object.keys(store.conversations).forEach(name => {
@@ -180,19 +202,19 @@ function renderMessages() {
 
     const text = document.createElement('div');
     text.className = "text-content";
-    text.textContent = msg.text;
+    text.innerHTML = formatText(msg.text);
     text.id = "text-" + index;
 
     const actions = document.createElement("div");
     actions.className = "action-row";
 
-    const del = document.createElement("span");
-    del.textContent = "削除";
-    del.onclick = () => deleteMessage(index);
-
     const edit = document.createElement("span");
     edit.textContent = "編集";
     edit.onclick = () => startEdit(index);
+
+    const del = document.createElement("span");
+    del.textContent = "削除";
+    del.onclick = () => deleteMessage(index);
 
     actions.appendChild(edit);
     actions.appendChild(del);
@@ -209,20 +231,32 @@ function startEdit(index) {
   const textDiv = document.getElementById("text-" + index);
   const oldText = store.conversations[store.current][index].text;
 
-  const inputEdit = document.createElement("input");
-  inputEdit.className = "edit-input";
-  inputEdit.value = oldText;
+  const textarea = document.createElement("textarea");
+  textarea.className = "edit-input";
+  textarea.value = oldText;
 
-  inputEdit.onblur = () => finishEdit(index, inputEdit.value);
-  inputEdit.onkeypress = (e) => {
-    if (e.key === "Enter") {
-      finishEdit(index, inputEdit.value);
+  autoResize(textarea);
+
+  textarea.addEventListener("input", () => autoResize(textarea));
+
+  textarea.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      finishEdit(index, textarea.value);
     }
-  };
+  });
+
+  textarea.addEventListener("blur", () => {
+    finishEdit(index, textarea.value);
+  });
 
   textDiv.innerHTML = "";
-  textDiv.appendChild(inputEdit);
-  inputEdit.focus();
+  textDiv.appendChild(textarea);
+  textarea.focus();
+}
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
 }
 
 function finishEdit(index, newText) {
@@ -246,9 +280,27 @@ function sendMessage() {
   renderMessages();
 }
 
+input.addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
 function toggleSender() {
   currentSender = currentSender === "me" ? "other" : "me";
   toggleBtn.textContent = currentSender === "me" ? "自分" : "相手";
+}
+
+function renderConversations() {
+  select.innerHTML = "";
+  Object.keys(store.conversations).forEach(name => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    if (name === store.current) option.selected = true;
+    select.appendChild(option);
+  });
 }
 
 function deleteMessage(index) {
